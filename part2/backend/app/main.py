@@ -1,16 +1,15 @@
 import threading
 from fastapi import FastAPI
-from app.routers import routes
+from app.routers.routes import router
 from app.clients.kafka_client import kafka_consumer
+from app.clients.nodes_client import discover_nodes
 
 
-t = threading.Thread(
-    target=kafka_consumer,
-    args=('test-topic', '127.0.0.1:9092'),
-    daemon=True,
-)
-t.start()
-#kafka_consumer(1, 2)
+kafka_t = threading.Thread(target=kafka_consumer, daemon=True)
+discovering_t = threading.Thread(target=discover_nodes, daemon=True)
+
+kafka_t.start()
+discovering_t.start()
 
 app = FastAPI()
 
@@ -18,5 +17,5 @@ app = FastAPI()
 async def root():
     return {"message": "hello world"}
 
-app.include_router(routes.router)
+app.include_router(router)
 
