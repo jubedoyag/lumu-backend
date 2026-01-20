@@ -1,13 +1,15 @@
 import httpx
+import uuid
 from app.core.config import logger
 from app.clients.nodes_client import DISCOVERED_NODES
 
 
 IP_ADDRESSES = set()
+NODE_ID = uuid.uuid4()
 
 
 def get_status():
-    return {"status": True}
+    return {"status": True, "node_id": NODE_ID}
 
 def get_local_ip_count():
     return {"counting": len(IP_ADDRESSES)}
@@ -17,7 +19,10 @@ async def get_global_ip_count():
 
     counting = len(IP_ADDRESSES)
     voting_nodes = 0
-    for node in DISCOVERED_NODES:
+
+    for node_id in DISCOVERED_NODES:
+        node = DISCOVERED_NODES.get(node_id)
+
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.get(f"http://{node}:8000/number-ips")
@@ -40,5 +45,6 @@ async def get_global_ip_count():
         "number": max_count,
         "voted_by": votes.get(max_count),
         "voting_nodes": voting_nodes,
+        "votes": votes,
     }
 
